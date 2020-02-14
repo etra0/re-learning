@@ -52,3 +52,24 @@ uintptr_t followDynamicPointer(HANDLE hProc, uintptr_t ptr, std::vector<unsigned
 
     return addr;
 }
+
+
+void getByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &target, int n) {
+    uintptr_t addr = ptr;
+    BYTE cValue = 0x0;
+    for (unsigned int i = 0; i < n; i++) {
+        ReadProcessMemory(hProc, (BYTE*)addr, &cValue, sizeof(cValue), nullptr);
+        (target).push_back(cValue);
+        addr += 1;
+    }
+}
+
+void writeByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &source) {
+    uintptr_t addr = ptr;
+    BYTE cValue = 0x0;
+    for (unsigned int i = 0; i < source.size(); i++) {
+        cValue = source[i];
+        WriteProcessMemory(hProc, (BYTE*)addr, &cValue, sizeof(cValue), nullptr);
+        addr += 1;
+    }
+}
