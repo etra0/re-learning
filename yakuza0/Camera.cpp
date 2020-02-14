@@ -18,7 +18,6 @@ void Camera::releaseCamera() {
     if (!isCameraReleased) {
         for (int i = 0; i < originalInfo.size(); i++) {
             cAddress = moduleAddress + offsets[i];
-            std::cout << "caddress " << std::hex << cAddress << std::endl;
             std::vector<BYTE> nops(originalInfo[i].size(), 0x90);
             writeByteVector(process, cAddress, nops);
         }
