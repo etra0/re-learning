@@ -1,5 +1,8 @@
 #include "process.h"
-
+/*
+ * Some functions were based on the tutorial from Game Hacking's user
+ * Rive, here's the tutorial: https://www.youtube.com/watch?v=wiX5LmdD5y
+*/
 DWORD getProcId(const wchar_t* procName) {
     DWORD procId = 0;
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -53,7 +56,6 @@ uintptr_t followDynamicPointer(HANDLE hProc, uintptr_t ptr, std::vector<unsigned
     return addr;
 }
 
-
 void getByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &target, int n) {
     uintptr_t addr = ptr;
     BYTE cValue = 0x0;
@@ -66,10 +68,14 @@ void getByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &target, int n
 
 void writeByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &source) {
     uintptr_t addr = ptr;
-    BYTE cValue = 0x0;
-    for (unsigned int i = 0; i < source.size(); i++) {
-        cValue = source[i];
-        WriteProcessMemory(hProc, (BYTE*)addr, &cValue, sizeof(cValue), nullptr);
-        addr += 1;
-    }
+    DWORD protectionBytes;
+
+    int nBytes = source.size();
+    BYTE bytesToWrite[nBytes];
+    
+    for (int i = 0; i < nBytes; bytesToWrite[i] = source[i], i++);
+
+    VirtualProtectEx(hProc, (BYTE*)addr, nBytes, PAGE_EXECUTE_READWRITE, &protectionBytes);
+    WriteProcessMemory(hProc, (BYTE*)addr, bytesToWrite, nBytes, nullptr);
+    VirtualProtectEx(hProc, (BYTE*)addr, nBytes, protectionBytes, &protectionBytes);
 }

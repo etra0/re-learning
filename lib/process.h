@@ -1,8 +1,4 @@
-#include <vector>
-#include <windows.h>
-#include <string.h>
-#include <iostream>
-#include <TlHelp32.h>
+#include "header.h"
 
 DWORD getProcId(const wchar_t* procName);
 
