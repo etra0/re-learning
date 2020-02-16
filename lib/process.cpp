@@ -46,6 +46,7 @@ uintptr_t getModuleBaseAddress(DWORD procId, const wchar_t* modName) {
     return modBaseAddr;
 }
 
+// En el caso de que se quiera llegar al base pointer, no olvidar agregar un 0x0 al final del vector.
 uintptr_t followDynamicPointer(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> offsets) {
     uintptr_t addr = ptr;
     for (unsigned int i = 0; i < offsets.size(); ++i) {

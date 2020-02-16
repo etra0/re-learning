@@ -1,6 +1,6 @@
 LIB=..\lib
 GXX=g++
-FLAGS=-municode
+FLAGS=-Wall -g -municode
 
 main.exe: process.o main.cpp Camera.cpp
 	$(GXX) $(FLAGS) -I$(LIB) process.o Camera.cpp main.cpp -o main.exe
