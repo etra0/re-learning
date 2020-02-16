@@ -116,13 +116,13 @@ void Camera::handleKeyPresses() {
     }
 
     if (GetAsyncKeyState(VK_UP) & 0x8000) {
-        cameraSpeed += .05;
+        cameraSpeed += .01;
         std::cout << "Speed: " << cameraSpeed << std::endl;
         Sleep(200);
     }
 
     if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
-        cameraSpeed -= .05;
+        cameraSpeed -= .01;
         if (cameraSpeed < 0) cameraSpeed = 0;
         std::cout << "Speed: " << cameraSpeed << std::endl;
         Sleep(200);

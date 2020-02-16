@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="29">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>57</ID>
+      <Description>"Freeze Camera"</Description>
+      <LastState Activated="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : Zelda Breath of the Wild
+  Version:
+  Date   : 2020-02-16
+  Author : etra0
+
+  This script freezes the camera in BOTW.
+}
+
+
+[ENABLE]
+aobscan(freeCamera,45 0F 38 F1 74 05 5C 0F 28 C5) // should be unique
+registersymbol(freeCamera)
+
+freeCamera:
+  db 90 90 90 90 90 90 90
+
+freeCamera+24:
+  db 90 90 90 90 90 90 90
+
+freeCamera+144:
+  db 90 90 90 90 90 90 90
+
+[DISABLE]
+
+freeCamera:
+  db 45 0F 38 F1 74 05 5C
+freeCamera+24:
+  db 45 0F 38 F1 74 05 60
+freeCamera+144:
+  db 45 0F 38 F1 74 05 64
+
+unregistersymbol(freeCamera)
+</AssemblerScript>
+      <Hotkeys>
+        <Hotkey>
+          <Action>Toggle Activation</Action>
+          <Keys>
+            <Key>36</Key>
+          </Keys>
+          <ID>0</ID>
+        </Hotkey>
+      </Hotkeys>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>52</ID>
+      <Description>"Get Camera Data"</Description>
+      <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+      <LastState Activated="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : Zelda Breath of the Wild
+  Version:
+  Date   : 2020-02-16
+  Author : etra0
+
+  Get the camera information
+}
+[ENABLE]
+aobscan(getCameraInfo,5A C0 4D 8B 74 05 5C) // should be unique
+
+alloc(cameraInfoMem,$1000,getCameraInfo)
+registersymbol(cameraInfoMem)
+
+define(pCamera,cameraInfoMem+100)
+registersymbol(pCamera)
+
+label(code)
+label(return)
+
+pCamera:
+  dd 0
+
+cameraInfoMem:
+
+code:
+  push rbx
+  lea rbx,[r13+rax]
+  mov [pCamera],rbx
+  pop rbx
+  mov r14,[r13+rax+5C]
+  jmp return
+
+getCameraInfo+02:
+  jmp cameraInfoMem
+return:
+registersymbol(getCameraInfo)
+
+[DISABLE]
+
+getCameraInfo+02:
+  db 4D 8B 74 05 5C
+
+unregistersymbol(getCameraInfo)
+dealloc(newmem)
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>58</ID>
+          <Description>"Handle Camera Controls"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+[ENABLE]
+dofile('endianness.lua')
+function moveCamera()
+  local camx_address = "[pCamera]+5C"
+  local camy_address = "[pCamera]+64"
+  local camz_address = "[pCamera]+60"
+  local speed = 1
+
+  local camx = readFloatBigEndian(camx_address)
+  local camy = readFloatBigEndian(camy_address)
+  local camz = readFloatBigEndian(camz_address)
+
+  if (isKeyPressed(VK_W)) then
+    writeFloatBigEndian(camx_address, camx+speed)
+  end
+  if (isKeyPressed(VK_S)) then
+    writeFloatBigEndian(camx_address, camx-speed)
+  end
+  if (isKeyPressed(VK_A)) then
+    writeFloatBigEndian(camy_address, camy+speed)
+  end
+  if (isKeyPressed(VK_D)) then
+    writeFloatBigEndian(camy_address, camy-speed)
+  end
+  if (isKeyPressed(VK_Q)) then
+    writeFloatBigEndian(camz_address, camz+speed)
+  end
+  if (isKeyPressed(VK_E)) then
+    writeFloatBigEndian(camz_address, camz-speed)
+  end
+end
+
+t = createTimer(getMainForm())
+t.Interval = 10
+t.OnTimer = moveCamera
+
+[DISABLE]
+t.Enabled = false
+t.destroy()
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>59</ID>
+          <Description>"Camera Data"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>54</ID>
+              <Description>"Camera X"</Description>
+              <LastState Value="2855.960449" RealAddress="1DD7D6D7218"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>Custom</VariableType>
+              <CustomType>Float Big Endian</CustomType>
+              <Address>[pCamera]+5C</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>55</ID>
+              <Description>"Camera Y"</Description>
+              <LastState Value="-74.02858734" RealAddress="1DD7D6D7220"/>
+              <VariableType>Custom</VariableType>
+              <CustomType>Float Big Endian</CustomType>
+              <Address>[pCamera]+64</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>56</ID>
+              <Description>"Camera Z"</Description>
+              <LastState Value="251.8055267" RealAddress="1DD7D6D721C"/>
+              <VariableType>Custom</VariableType>
+              <CustomType>Float Big Endian</CustomType>
+              <Address>[pCamera]+60</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+</CheatTable>

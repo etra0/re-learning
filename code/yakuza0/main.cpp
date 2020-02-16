@@ -27,7 +27,8 @@ int wmain(int argc, char** argv) {
         "END: Attach/Deattach the camera\n"
         "U, J: Move along X axis\n"
         "H, K: Move along Y axis\n"
-        "Y, I: Move along Z axis\n\n"
+        "Y, I: Move along Z axis\n"
+        "UP, DOWN: Increase/Decrease camera speed\n\n"
         "Please check you don't have that keys mapped into the game (unmap controller buttons in settings)\n"
         "For panning:\n"
         "Press F8 then the direction you wish to move. F8 again to deactivate it.\n";
