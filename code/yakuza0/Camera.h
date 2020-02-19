@@ -13,7 +13,7 @@ class Camera {
     void moveCamera(int x, int y, int z);
     void resolveCameraPointers();
 
-    uintptr_t xAddress, yAddress, zAddress;
+    uintptr_t pCamera;
 
     public:
     void handleKeyPresses();

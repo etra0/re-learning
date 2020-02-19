@@ -9,3 +9,5 @@ uintptr_t followDynamicPointer(HANDLE hProc, uintptr_t ptr, std::vector<unsigned
 void getByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &target, int n);
 
 void writeByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &source);
+
+bool hookFunction(HANDLE hProc, uintptr_t toHook, uintptr_t f, int len );

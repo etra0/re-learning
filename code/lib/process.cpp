@@ -80,3 +80,28 @@ void writeByteVector(HANDLE hProc, uintptr_t ptr, std::vector<BYTE> &source) {
     WriteProcessMemory(hProc, (BYTE*)addr, bytesToWrite, nBytes, nullptr);
     VirtualProtectEx(hProc, (BYTE*)addr, nBytes, protectionBytes, &protectionBytes);
 }
+
+// function based on https://www.youtube.com/watch?v=jTl3MFVKSUM
+bool hookFunction(HANDLE hProc, uintptr_t toHook, uintptr_t f, int len) {
+    if (len < 5)
+        return false;
+    
+    DWORD curProtection;
+    VirtualProtectEx(hProc, (BYTE*)toHook, len, PAGE_EXECUTE_READWRITE, &curProtection);
+
+    // Se setean todos los bytes a nop, just in case
+    std::vector<BYTE> nops(len, 0x90);
+    writeByteVector(hProc, (BYTE*)toHook, nops);
+
+    uintptr_t relativeAddress = ((uintptr_t)f - (uintptr_t)toHook) - 5;
+
+    BYTE instructions[5];
+    instructions[0] = 0xE9;
+    memcpy(instructions+1, &relativeAddress, sizeof(DWORD));
+
+    WriteProcessMemory(hProc, (BYTE*)toHook, instructions, 5, nullptr);
+
+    VirtualProtectEx(hProc, (BYTE*)toHook, len, curProtection, nullptr);
+
+    return true;
+}

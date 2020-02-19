@@ -36,28 +36,70 @@ void Camera::releaseCamera() {
 
 }
 
+__declspec(naked) void shellcode()
+{
+    // rax -> jmpBackAddress
+    // rax+8 -> direccion de la camara
+     __asm__ volatile (
+         ".intel_syntax noprefix;"
+         "lea rax,[rip+0x200];"
+         "push rbx;"
+         "mov rbx,rcx;"
+         "mov [rax+8],rbx;"
+         "pop rbx;"
+         "movaps xmm1,[rcx+0x00000320];"
+         "jmp [rax];"
+         "nop;nop;nop;nop;" // ending function signature
+        ".att_syntax;"
+     );
+
+}
+
 void Camera::resolveCameraPointers() {
-    uintptr_t baseAddress = 0x0;
-    std::vector<unsigned int> offsets = {0xB8, 0x18, 0x8, 0xB8, 0xC8, 0x128, 0x0};
-    unsigned int xOffset = 0x320, yOffset = 0x328, zOffset = 0x324;
 
-    baseAddress = followDynamicPointer(process, moduleAddress + 0x01163F30, offsets);
+    void *pFunc = (void *)shellcode;
+    int funcSize = 0;
+    // calc the size of the function
+    for(funcSize = 0; *((UINT32 *)(&((unsigned char *)pFunc)[funcSize])) != 0x90909090; ++funcSize);
 
-    // std::cout << "Module Base " << std::hex << moduleAddress + 0x01163F30 << std::endl;
-    // std::cout << "Base Address " << std::hex << baseAddress << std::endl;
-    // std::cout << "New Address " << std::hex << (baseAddress + xOffset) << std::endl;
+    // try allocate near module
+    void *pShellCode;
+    for (int i = 1; pShellCode == 0; i++)
+        pShellCode = VirtualAllocEx(process, (BYTE*)(moduleAddress - (0x1000 * i)), funcSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
-    xAddress = baseAddress + xOffset;
-    yAddress = baseAddress + yOffset;
-    zAddress = baseAddress + zOffset;
+    // absolute jmp
+    uintptr_t jmpBackAddress = (moduleAddress + 0x18ABC2) + 7;
+
+    WriteProcessMemory(process, pShellCode, (LPCVOID)shellcode, funcSize, nullptr);
+
+    // 0x207 -> jmp back address
+    // 0x207 + 0x8 -> camera address
+    WriteProcessMemory(process, pShellCode + 0x207, &jmpBackAddress, 8, nullptr);
+    pCamera = (uintptr_t)(pShellCode + 0x207 + 0x8);
+    
+    std::cout << "pCamera " << pCamera;
+    std::cout << " Assigned address " << std::hex << pShellCode << std::endl;
+
+    hookFunction(process, (moduleAddress + 0x18ABC2), (uintptr_t)pShellCode, 7);
 }
 
 void Camera::moveCamera(int xDir, int yDir, int zDir) {
+    unsigned int xOffset = 0x320, yOffset = 0x328, zOffset = 0x324;
+    uintptr_t camera;
+    ReadProcessMemory(process, (LPCVOID)pCamera, &camera, 8, nullptr);
+
+    uintptr_t xAddress = camera + xOffset;
+    uintptr_t yAddress = camera + yOffset;
+    uintptr_t zAddress = camera + zOffset;
     float x, y, z;
 
     ReadProcessMemory(process, (BYTE*)xAddress, &x, sizeof(x), nullptr);
     ReadProcessMemory(process, (BYTE*)yAddress, &y, sizeof(y), nullptr);
     ReadProcessMemory(process, (BYTE*)zAddress, &z, sizeof(z), nullptr);
+    // std::cout << "pCamera " << camera;
+    // std::cout << "x: " << x << std::endl;
+    // std::cout << "y: " << y << std::endl;
+    // std::cout << "z: " << z << std::endl;
 
     x += xDir * cameraSpeed;
     y += yDir * cameraSpeed;
