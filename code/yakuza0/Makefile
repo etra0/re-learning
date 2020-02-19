@@ -6,7 +6,7 @@ main.exe: process.o main.cpp Camera.cpp my.res
 	$(GXX) $(FLAGS) -I$(LIB) process.o Camera.cpp main.cpp my.res -o main.exe
 
 release:
-	$(GXX) $(FLAGS) -I$(LIB) -static-libgcc -static-libstdc++ process.o Camera.cpp main.cpp my.res -o main.exe
+	$(GXX) $(FLAGS) -I$(LIB) -static-libgcc -static-libstdc++ process.o Camera.cpp main.cpp my.res -o yakuza0-freecamera.exe
 
 process.o: $(LIB)\header.h $(LIB)\process.h $(LIB)\process.cpp
 	$(GXX) $(FLAGS) -c $(LIB)\process.cpp

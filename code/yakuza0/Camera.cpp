@@ -42,13 +42,13 @@ __declspec(naked) void shellcode()
     // rax+8 -> direccion de la camara
      __asm__ volatile (
          ".intel_syntax noprefix;"
-         "lea rax,[rip+0x200];"
+         "lea r11,[rip+0x200];"
          "push rbx;"
          "mov rbx,rcx;"
-         "mov [rax+8],rbx;"
+         "mov [r11+8],rbx;"
          "pop rbx;"
          "movaps xmm1,[rcx+0x00000320];"
-         "jmp [rax];"
+         "jmp [r11];"
          "nop;nop;nop;nop;" // ending function signature
         ".att_syntax;"
      );
@@ -96,7 +96,6 @@ void Camera::moveCamera(int xDir, int yDir, int zDir) {
     ReadProcessMemory(process, (BYTE*)xAddress, &x, sizeof(x), nullptr);
     ReadProcessMemory(process, (BYTE*)yAddress, &y, sizeof(y), nullptr);
     ReadProcessMemory(process, (BYTE*)zAddress, &z, sizeof(z), nullptr);
-    // std::cout << "pCamera " << camera;
     // std::cout << "x: " << x << std::endl;
     // std::cout << "y: " << y << std::endl;
     // std::cout << "z: " << z << std::endl;
@@ -170,7 +169,8 @@ void Camera::handleKeyPresses() {
         Sleep(200);
     }
 
-    moveCamera(xDir, yDir, zDir);
+    if (xDir || yDir || zDir)
+        moveCamera(xDir, yDir, zDir);
     if (!panningEnabled) {
         xDir = 0, yDir = 0, zDir = 0;
     }
