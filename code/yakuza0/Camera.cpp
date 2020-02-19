@@ -63,7 +63,7 @@ void Camera::resolveCameraPointers() {
     for(funcSize = 0; *((UINT32 *)(&((unsigned char *)pFunc)[funcSize])) != 0x90909090; ++funcSize);
 
     // try allocate near module
-    void *pShellCode;
+    void *pShellCode = nullptr;
     for (int i = 1; pShellCode == 0; i++)
         pShellCode = VirtualAllocEx(process, (BYTE*)(moduleAddress - (0x1000 * i)), funcSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
