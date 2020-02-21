@@ -8,7 +8,7 @@ Las herramientas principales que he usado es C++, y Cheat Engine.
 * *Yakuza 0*: Release Camera
 
 # TODOs:
-* [ ] Aprender como inyectar código con un jump
+* [x] Aprender como inyectar código con un jump
 
 ## Tutoriales útiles:
 * Stephen Chapman, [Cheat Engine Tutorials](https://www.youtube.com/playlist?list=PLNffuWEygffbbT9Vz-Y1NXQxv2m6mrmHr)
