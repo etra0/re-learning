@@ -4,32 +4,31 @@
 Camera::Camera(HANDLE hProcess, uintptr_t address) {
     process = hProcess;
     moduleAddress = address;
-    resolveCameraPointers();
+    resolve_camera_pointers();
 }
 
-void Camera::releaseCamera() {
+void Camera::release_camera() {
     std::vector<std::vector<BYTE> > originalInfo = {
         {0x66, 0x0F, 0x7F, 0x87, 0x20, 0x03, 0x00, 0x00},
         {0x0F, 0x29, 0x06}
     };
-    std::vector<unsigned int> offsets = {0x18D24F, 0x18B1E5};
     
     uintptr_t cAddress;
 
-    if (!isCameraReleased) {
+    if (!is_camera_released) {
         for (int i = 0; i < originalInfo.size(); i++) {
-            cAddress = moduleAddress + offsets[i];
+            cAddress = moduleAddress + this->offsets[i];
             std::vector<BYTE> nops(originalInfo[i].size(), 0x90);
             writeByteVector(process, cAddress, nops);
         }
-        isCameraReleased = true;
+        is_camera_released = true;
         std::cout << "Camera Released" << std::endl;
     } else {
         for (int i = 0; i < originalInfo.size(); i++) {
-            cAddress = moduleAddress + offsets[i];
+            cAddress = moduleAddress + this->offsets[i];
             writeByteVector(process, cAddress, originalInfo[i]);
         }
-        isCameraReleased = false;
+        is_camera_released = false;
         std::cout << "Camera Unreleased" << std::endl;
     }
 
@@ -55,61 +54,61 @@ __declspec(naked) void shellcode()
 
 }
 
-void Camera::resolveCameraPointers() {
+void Camera::resolve_camera_pointers() {
 
-    void *pFunc = (void *)shellcode;
-    int funcSize = 0;
+    void *p_func = (void *)shellcode;
+    int f_size = 0;
     // calc the size of the function
-    for(funcSize = 0; *((UINT32 *)(&((unsigned char *)pFunc)[funcSize])) != 0x90909090; ++funcSize);
+    for(f_size = 0; *((UINT32 *)(&((unsigned char *)p_func)[f_size])) != 0x90909090; ++f_size);
 
     // try allocate near module
-    void *pShellCode = nullptr;
-    for (int i = 1; pShellCode == 0; i++)
-        pShellCode = VirtualAllocEx(process, (BYTE*)(moduleAddress - (0x1000 * i)), funcSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    void *p_shellcode = nullptr;
+    int instruction_size = 7;
+    for (int i = 1; p_shellcode == 0; i++)
+        p_shellcode = VirtualAllocEx(process, (BYTE*)(moduleAddress - (0x1000 * i)), f_size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
     // absolute jmp
-    uintptr_t jmpBackAddress = (moduleAddress + 0x18ABC2) + 7;
+    uintptr_t moduleInjectionAddress = (moduleAddress + this->jumpOffset);
+    uintptr_t jmpBackAddress = moduleInjectionAddress + instruction_size;
 
-    WriteProcessMemory(process, pShellCode, (LPCVOID)shellcode, funcSize, nullptr);
+    WriteProcessMemory(process, p_shellcode, (LPCVOID)shellcode, f_size, nullptr);
 
     // 0x207 -> jmp back address
     // 0x207 + 0x8 -> camera address
-    WriteProcessMemory(process, pShellCode + 0x207, &jmpBackAddress, 8, nullptr);
-    pCamera = (uintptr_t)(pShellCode + 0x207 + 0x8);
+    WriteProcessMemory(process, p_shellcode + 0x207, &jmpBackAddress, 8, nullptr);
+    pCamera = (uintptr_t)(p_shellcode + 0x207 + 0x8);
     
     std::cout << "pCamera " << pCamera;
-    std::cout << " Assigned address " << std::hex << pShellCode << std::endl;
+    std::cout << " Assigned address " << std::hex << p_shellcode << std::endl;
 
-    hookFunction(process, (moduleAddress + 0x18ABC2), (uintptr_t)pShellCode, 7);
+    // this function hooks with the process the jump.
+    hookFunction(process, moduleInjectionAddress, (uintptr_t)p_shellcode, instruction_size);
 }
 
-void Camera::moveCamera(int xDir, int yDir, int zDir) {
-    unsigned int xOffset = 0x320, yOffset = 0x328, zOffset = 0x324;
+void Camera::move_camera(int xDir, int yDir, int zDir) {
+    unsigned int x_offset = 0x320, y_offset = 0x328, z_offset = 0x324;
     uintptr_t camera;
     ReadProcessMemory(process, (LPCVOID)pCamera, &camera, 8, nullptr);
 
-    uintptr_t xAddress = camera + xOffset;
-    uintptr_t yAddress = camera + yOffset;
-    uintptr_t zAddress = camera + zOffset;
+    uintptr_t x_address = camera + x_offset;
+    uintptr_t y_address = camera + y_offset;
+    uintptr_t z_address = camera + z_offset;
     float x, y, z;
 
-    ReadProcessMemory(process, (BYTE*)xAddress, &x, sizeof(x), nullptr);
-    ReadProcessMemory(process, (BYTE*)yAddress, &y, sizeof(y), nullptr);
-    ReadProcessMemory(process, (BYTE*)zAddress, &z, sizeof(z), nullptr);
-    // std::cout << "x: " << x << std::endl;
-    // std::cout << "y: " << y << std::endl;
-    // std::cout << "z: " << z << std::endl;
+    ReadProcessMemory(process, (BYTE*)x_address, &x, sizeof(x), nullptr);
+    ReadProcessMemory(process, (BYTE*)y_address, &y, sizeof(y), nullptr);
+    ReadProcessMemory(process, (BYTE*)z_address, &z, sizeof(z), nullptr);
 
-    x += xDir * cameraSpeed;
-    y += yDir * cameraSpeed;
-    z += zDir * cameraSpeed;
+    x += xDir * camera_speed;
+    y += yDir * camera_speed;
+    z += zDir * camera_speed;
 
-    WriteProcessMemory(process, (BYTE*)xAddress, &x, sizeof(x), nullptr);
-    WriteProcessMemory(process, (BYTE*)yAddress, &y, sizeof(y), nullptr);
-    WriteProcessMemory(process, (BYTE*)zAddress, &z, sizeof(z), nullptr);
+    WriteProcessMemory(process, (BYTE*)x_address, &x, sizeof(x), nullptr);
+    WriteProcessMemory(process, (BYTE*)y_address, &y, sizeof(y), nullptr);
+    WriteProcessMemory(process, (BYTE*)z_address, &z, sizeof(z), nullptr);
 }
 
-void Camera::handleKeyPresses() {
+void Camera::handle_key_presses() {
     enum keys {
         K_U = 0x55,
         K_J = 0x4A,
@@ -122,7 +121,7 @@ void Camera::handleKeyPresses() {
     static int xDir = 0, yDir = 0, zDir = 0;
 
     if (GetAsyncKeyState(VK_END) & 0x8000) {
-        releaseCamera();
+        release_camera();
         Sleep(500);
     }
 
@@ -151,27 +150,27 @@ void Camera::handleKeyPresses() {
     }
 
     if (GetAsyncKeyState(VK_F8) & 0x8000) {
-        panningEnabled = !panningEnabled;
-        std::cout << "Panning: " << panningEnabled << std::endl;
+        panning_enabled = !panning_enabled;
+        std::cout << "Panning: " << panning_enabled << std::endl;
         Sleep(500); // TODO: Find a better way of handling boolean key presses.
     }
 
     if (GetAsyncKeyState(VK_UP) & 0x8000) {
-        cameraSpeed += .01;
-        std::cout << "Speed: " << cameraSpeed << std::endl;
+        camera_speed += .01;
+        std::cout << "Speed: " << camera_speed << std::endl;
         Sleep(200);
     }
 
     if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
-        cameraSpeed -= .01;
-        if (cameraSpeed < 0) cameraSpeed = 0;
-        std::cout << "Speed: " << cameraSpeed << std::endl;
+        camera_speed -= .01;
+        if (camera_speed < 0) camera_speed = 0;
+        std::cout << "Speed: " << camera_speed << std::endl;
         Sleep(200);
     }
 
     if (xDir || yDir || zDir)
-        moveCamera(xDir, yDir, zDir);
-    if (!panningEnabled) {
+        move_camera(xDir, yDir, zDir);
+    if (!panning_enabled) {
         xDir = 0, yDir = 0, zDir = 0;
     }
 

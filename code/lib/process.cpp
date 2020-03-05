@@ -91,7 +91,7 @@ bool hookFunction(HANDLE hProc, uintptr_t toHook, uintptr_t f, int len) {
 
     // Se setean todos los bytes a nop, just in case
     std::vector<BYTE> nops(len, 0x90);
-    writeByteVector(hProc, (BYTE*)toHook, nops);
+    writeByteVector(hProc, (BYTE)toHook, nops);
 
     uintptr_t relativeAddress = ((uintptr_t)f - (uintptr_t)toHook) - 5;
 

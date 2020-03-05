@@ -3,12 +3,18 @@
 #include "process.h"
 #include "Camera.h"
 
+#ifdef KIWAMI
+const wchar_t *game_name = L"YakuzaKiwami.exe";
+#else
+const wchar_t *game_name = L"Yakuza0.exe";
+#endif
+
 int wmain(int argc, char** argv) {
-    DWORD procId = getProcId(L"Yakuza0.exe");
+    DWORD procId = getProcId(game_name);
     std::cout << "procId " << procId << std::endl;
 
     // 400000 is for 32 bits, don't forget that!
-    uintptr_t moduleBase = getModuleBaseAddress(procId, L"Yakuza0.exe");
+    uintptr_t moduleBase = getModuleBaseAddress(procId, game_name);
     // std::cout << "moduleBaseAddr " << std::hex << moduleBase << std::endl; 
 
     HANDLE hProcess = 0;
@@ -35,7 +41,7 @@ int wmain(int argc, char** argv) {
     std::cout << welcomeMessage;
 
     while (mainLoop) {
-        cam.handleKeyPresses();
+        cam.handle_key_presses();
 
         Sleep(10);
     }
