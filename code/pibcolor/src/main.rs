@@ -50,7 +50,7 @@ fn write_til_correct(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8
     
     println!("first offset: {:x?}", i);
     if &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
-        println!("Warning, there's no info here {:x?}", i);
+        println!("Warning, there's no info here {:x?}.", i);
         return;
     }
     i += 0x4;
