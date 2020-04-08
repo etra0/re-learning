@@ -46,17 +46,14 @@ fn get_pib_files(path: &str) -> Vec<String> {
 }
 
 fn write_til_correct(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8>) {
-    let mut i: usize = beginning_offset - 0x80;
+    let mut i: usize = beginning_offset + 0x27C;
     println!("first offset: {:x?}", i);
     loop {
-        if &file[i-0x10+0xC..i-0x10+0x10] == [0x00, 0x00, 0x00, 0x80] { break; }
-
-        if &file[i-0x10..i] == [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00] { println!("offeset {:x?} con problemas", i-0x10); break; }
-        file.splice(i-0xC..i, color.iter().cloned());
-        println!("{:x?}", &file[(i-0x10)..i]);
-        i -= 0x10;
+        if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
+        file.splice(i+0x4..i+0x10, color.iter().cloned());
+        println!("{:x?}", &file[(i)..i+0x10]);
+        i += 0x10;
     }
-    println!("ending offset: {:x?}", i);
 }
 
 /*
@@ -95,26 +92,24 @@ fn write_color(file: &str, color: DWORD) -> io::Result<()>  {
     let color_vec = generate_aob_color(color);
     
     loop {
-        let current_pointer = &f[i..i+8];
+        let current_pointer = &f[i..i+3];
         match current_pointer {
             // The name of the texture is located after this pattern, and 
             // 80 bytes before the colors are in a contiguous array in the ARGB format
             // (with every value as a float from 0 to 1)
-            [0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x01] |
-            [0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x02]
+            [0x44, 0x44, 0x53]
              => {
                 println!("match at {:x?}", i);
                 write_til_correct(&mut f, i, &color_vec);
             }, 
             _ => {},
         }
-        i += 4;
+        i += 1;
 
-        if i+8 > f.len() { break; }
+        if i+3 > f.len() { break; }
     }
 
     let output = String::from(file);
-    println!("Writting onto {}", output);
     fs::write(output, f).expect("error writing file");
 
     Ok(())
