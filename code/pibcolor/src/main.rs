@@ -46,13 +46,29 @@ fn get_pib_files(path: &str) -> Vec<String> {
 }
 
 fn write_til_correct(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8>) {
-    let mut i: usize = beginning_offset + 0x278;
+    // offset 1: 0x1F8
+    // offset 2: 0x278
+    // offset 3: 1078
+    let mut i: usize = beginning_offset + 0x1F8;
     
     println!("first offset: {:x?}", i);
     if &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
-        println!("Warning, there's no info here {:x?}.", i);
+        println!("Warning, no first match {:x?}.", i);
+        i+= 0x80;
+    }
+
+    if &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
+        println!("Warning, no second match {:x?}.", i);
+        i+= 0xE00;
+    }
+
+    if file.len() < i + 0x10 || &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
+        println!("Warning, no third match, skipping {:x?}.", i);
+        i+= 0xE00;
         return;
     }
+
+
     i += 0x4;
     loop {
         if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
