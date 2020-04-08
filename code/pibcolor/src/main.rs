@@ -46,12 +46,39 @@ fn get_pib_files(path: &str) -> Vec<String> {
 }
 
 fn write_til_correct(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8>) {
-    let mut i: usize = beginning_offset + 0x27C;
+    let mut i: usize = beginning_offset + 0x278;
+    
     println!("first offset: {:x?}", i);
+    if &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
+        println!("Warning, there's no info here {:x?}", i);
+        return;
+    }
+    i += 0x4;
     loop {
         if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
         file.splice(i+0x4..i+0x10, color.iter().cloned());
         println!("{:x?}", &file[(i)..i+0x10]);
+        i += 0x10;
+    }
+}
+
+fn get_float(color: &[u8]) {
+    // let c: u32 = color[0] << 16 + color[1] << 12 + color[2] << 8 + color[3];
+    // println!("{:x?}", c);
+}
+
+fn read_colors(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8>) {
+    let mut i: usize = beginning_offset + 0x27C;
+    println!("first offset: {:x?}", i);
+    loop {
+        if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
+        for x in (i..i + 0x10).step_by(0x4) {
+            get_float(&file[x..x + 0x4]);
+
+        }
+
+        // file.splice(i+0x4..i+0x10, color.iter().cloned());
+        // println!("{:x?}", &file[(i)..i+0x10]);
         i += 0x10;
     }
 }
@@ -101,6 +128,7 @@ fn write_color(file: &str, color: DWORD) -> io::Result<()>  {
              => {
                 println!("match at {:x?}", i);
                 write_til_correct(&mut f, i, &color_vec);
+                // read_colors(&mut f, i, &color_vec);
             }, 
             _ => {},
         }
