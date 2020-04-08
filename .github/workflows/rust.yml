@@ -11,9 +11,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: "Cding into dir"
-      run: "cd ./code/pibcolor"
-      shell: pwsh
     - uses: actions/checkout@v2
     - name: Build
       run: cargo build --release
+      working-directory: code/pibcolor
