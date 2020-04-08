@@ -75,6 +75,7 @@ fn generate_aob_color(color: DWORD) -> Vec<u8> {
         .collect();
     // the first element is unused according to msdn
     mapped_vec.remove(0);
+    mapped_vec.reverse();
     
     let mut final_mapped_vec: Vec<u8> = Vec::new();
     
