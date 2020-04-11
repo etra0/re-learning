@@ -2,7 +2,6 @@
 use winapi::shared::minwindef::{DWORD};
 use winapi::shared::windef;
 use byteorder::{LittleEndian, WriteBytesExt};
-use std::io::prelude::*;
 use std::mem;
 use std::env;
 use std::fs;
@@ -48,52 +47,28 @@ fn get_pib_files(path: &str) -> Vec<String> {
 fn write_til_correct(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8>) {
     // offset 1: 0x1F8
     // offset 2: 0x278
-    // offset 3: 1078
-    let mut i: usize = beginning_offset + 0x1F8;
-    
-    println!("first offset: {:x?}", i);
-    if &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
-        println!("Warning, no first match {:x?}.", i);
-        i+= 0x80;
-    }
-
-    if &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
-        println!("Warning, no second match {:x?}.", i);
-        i+= 0xE00;
-    }
-
-    if file.len() < i + 0x10 || &file[i..i + 0x4] != [0x00, 0x00, 0x00, 0x80] {
-        println!("Warning, no third match, skipping {:x?}.", i);
-        i+= 0xE00;
-        return;
-    }
-
+    // offset 3: 0x1078
+    let mut i: usize = beginning_offset;
 
     i += 0x4;
     loop {
+        if i + 0x16 > file.len() { break; }
         if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
-        file.splice(i+0x4..i+0x10, color.iter().cloned());
-        println!("{:x?}", &file[(i)..i+0x10]);
-        i += 0x10;
-    }
-}
-
-fn get_float(color: &[u8]) {
-    // let c: u32 = color[0] << 16 + color[1] << 12 + color[2] << 8 + color[3];
-    // println!("{:x?}", c);
-}
-
-fn read_colors(file: &mut Vec<u8>, beginning_offset: usize, color: &Vec<u8>) {
-    let mut i: usize = beginning_offset + 0x27C;
-    println!("first offset: {:x?}", i);
-    loop {
-        if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
-        for x in (i..i + 0x10).step_by(0x4) {
-            get_float(&file[x..x + 0x4]);
-
+        let mut should_break = false;
+        for j in 0..4 {
+            if &file[i+j*0x4..i+j*0x4 + 0x4] == [0x00, 0x00, 0x00, 0x80] {
+                should_break = true;
+            }
         }
 
-        // file.splice(i+0x4..i+0x10, color.iter().cloned());
+        if should_break { break; }
+        if &file[i+0x4..i+0x10] == [0; 0xC] { break; }
+
+        // Force stop writting until the name of the dds file.
+        if &file[i..i+0x8] == [0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x01] ||
+            &file[i..i+0x8] == [0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x02] 
+         { break; }
+        file.splice(i+0x4..i+0x10, color.iter().cloned());
         // println!("{:x?}", &file[(i)..i+0x10]);
         i += 0x10;
     }
@@ -129,6 +104,35 @@ fn generate_aob_color(color: DWORD) -> Vec<u8> {
     final_mapped_vec
 }
 
+fn find_color_loc(file: &mut Vec<u8>, c_offset: usize) -> usize {
+    let mut c_pointer = c_offset + 0x4;
+
+    let mut f_found = false;
+
+    loop {
+        match &file[c_pointer..c_pointer+0x4] {
+            [0x00, 0x00, 0x00, 0x80] => {
+                // check the length is 4
+                if &file[c_pointer + 0x10..c_pointer + 0x14] != [0x00, 0x00, 0x00, 0x80] &&
+                    &file[c_pointer + 0x8..c_pointer + 0xC] != [0x00, 0x00, 0x00, 0x80] &&
+                    &file[c_pointer + 0x4..c_pointer + 0x8] != [0x00, 0x00, 0x00, 0x80] {
+                    f_found = true;
+                }
+            },
+            _ => {}
+        }
+
+        if f_found { break; }
+
+        // in the case we couldn't find anything.
+        if c_pointer + 0x14 >  file.len() { c_pointer = 0x0; break; }
+
+        c_pointer += 0x04;
+    }
+
+    c_pointer
+}
+
 fn write_color(file: &str, color: DWORD) -> io::Result<()>  {
     let mut f = fs::read(file)?;
     let mut i = 0;
@@ -143,8 +147,9 @@ fn write_color(file: &str, color: DWORD) -> io::Result<()>  {
             [0x44, 0x44, 0x53]
              => {
                 println!("match at {:x?}", i);
-                write_til_correct(&mut f, i, &color_vec);
-                // read_colors(&mut f, i, &color_vec);
+                let color_pointer = find_color_loc(&mut f, i);
+                println!("Color offset at {:x?}", color_pointer);
+                write_til_correct(&mut f, color_pointer, &color_vec);
             }, 
             _ => {},
         }
