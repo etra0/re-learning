@@ -6,6 +6,7 @@ Las herramientas principales que he usado es C++, y Cheat Engine.
 # Avances:
 * *The Witcher 1*: Cambiar el dinero (primer logro, solo prueba)
 * *Yakuza 0 & Kiwami*: Camera Release, se logró inyectar código en asm.
+* Avances en `reversing` los colores en los archivos tipo `.pibs` de Yakuza 0/Kiwami
 
 # TODOs:
 * [x] Aprender como inyectar código con un jump
